@@ -1,6 +1,8 @@
 import numpy as np
+import colorama as col
 import math
 import config
+from utils import get_representation
 
 
 class Object:
@@ -8,8 +10,7 @@ class Object:
         self.__representation = kwargs.get('representation', np.array([[' ']]))
         self.__position = kwargs.get('position', np.array([0, 0]))
         self.__color = kwargs.get('color', np.array([['', '']]))
-        self.__height, self.__width = kwargs.get(
-            'representation', np.array([[' ']])).shape
+        self.__height, self.__width = self.__representation.shape
 
     def set_position(self, position):
         position_x = position[1]
@@ -31,6 +32,9 @@ class Object:
 
     def get_representation(self, frame):
         return self.__representation, self.__color
+
+    def set_color(self, color):
+        self.__color = color
 
 
 class MovingObject(Object):
@@ -54,14 +58,20 @@ class MovingObject(Object):
         my_dimensions = self.get_dimensions()
 
         left = position[1]
-        right = position[1] + dimensions[1]
+        right = position[1] + dimensions[1] - 1
         top = position[0]
-        bottom = position[0] + dimensions[0]
+        bottom = position[0] + dimensions[0] - 1
 
         my_left = my_position[1]
-        my_right = my_position[1] + my_dimensions[1]
+        my_right = my_position[1] + my_dimensions[1] - 1
         my_top = my_position[0]
-        my_bottom = my_position[0] + my_dimensions[0]
+        my_bottom = my_position[0] + my_dimensions[0] - 1
+
+        outside = (my_right < left or my_left >
+                   right or my_top > bottom or my_bottom < top)
+
+        if outside:
+            return [False, False]
 
         collision_x = my_left == right or my_right == left or my_left == left or my_right == right
         collision_y = my_top == bottom or my_bottom == top or my_top == top or my_bottom == bottom
@@ -97,3 +107,38 @@ class Ball(MovingObject):
     def reverse_y(self):
         [speed_y, speed_x] = self.get_speed()
         self.set_speed(np.array([-speed_y, speed_x]))
+
+
+class Brick(Object):
+    def __init__(self,  **kwargs):
+        representation = kwargs.get(
+            'representation', get_representation('....'))
+
+        super().__init__(**kwargs, representation=representation)
+
+        self.__strength = kwargs.get('strength', 1)
+        self.__inactive = False
+        self.update_color()
+
+    def is_destroyed(self):
+        return self.__inactive
+
+    def update_color(self):
+        colors = [
+            [[col.Back.MAGENTA, col.Fore.MAGENTA]],
+            [[col.Back.CYAN, col.Fore.CYAN]],
+            [[col.Back.YELLOW, col.Fore.YELLOW]],
+            [[col.Back.RED, col.Fore.RED]],
+        ]
+        self.set_color(colors[max(0, self.__strength)])
+
+    def collide(self):
+        if self.__strength == -1:
+            return
+
+        self.__strength -= 1
+
+        if self.__strength == 0:
+            self.__inactive = True
+        else:
+            self.update_color()

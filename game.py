@@ -3,7 +3,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball
+from object import Paddle, Ball, Brick
 from utils import get_representation
 
 
@@ -19,8 +19,15 @@ class Game:
         self.__paddle = Paddle(speed=np.array(
             [0, 1]), representation=get_representation('====='), position=np.array([config.HEIGHT-1, 10]))
 
-        self.__ball = Ball(speed=np.array([-0.7, 0.7]), representation=get_representation(
+        self.__ball = Ball(speed=np.array([-0.5, 0.5]), representation=get_representation(
             '*'), position=np.array([config.HEIGHT - 3, 12]))
+
+        self.__bricks = [
+            Brick(position=[5, 5], strength=-1),
+            Brick(position=[5, 10], strength=1),
+            Brick(position=[5, 15], strength=2),
+            Brick(position=[5, 20], strength=3),
+        ]
 
     def start(self):
         key_input = KeyInput()
@@ -44,6 +51,11 @@ class Game:
             self.__screen.draw(self.__paddle, self.__frame)
             self.__screen.draw(self.__ball, self.__frame)
 
+            for brick in self.__bricks:
+                if brick.is_destroyed():
+                    continue
+                self.__screen.draw(brick, self.__frame)
+
             self.__screen.show()
 
     def manage_keys(self, ch):
@@ -62,6 +74,21 @@ class Game:
             self.__ball.reverse_x()
         if collide_y:
             self.__ball.reverse_y()
+
+        # Ball with bricks
+        for brick in self.__bricks:
+            if brick.is_destroyed():
+                continue
+
+            [collide_y, collide_x] = self.__ball.is_intersection(
+                brick.get_position(), brick.get_dimensions())
+
+            if collide_x:
+                self.__ball.reverse_x()
+            if collide_y:
+                self.__ball.reverse_y()
+            if collide_x or collide_y:
+                brick.collide()
 
     def clear(self):
         self.__screen.clear()
