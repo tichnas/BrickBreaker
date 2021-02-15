@@ -3,7 +3,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle
+from object import Paddle, Ball
 from utils import get_representation
 
 
@@ -18,6 +18,9 @@ class Game:
 
         self.__paddle = Paddle(speed=np.array(
             [0, 1]), representation=get_representation('====='), position=np.array([config.HEIGHT-1, 10]))
+
+        self.__ball = Ball(speed=np.array([-0.7, 0.7]), representation=get_representation(
+            '*'), position=np.array([config.HEIGHT - 3, 12]))
 
     def start(self):
         key_input = KeyInput()
@@ -34,7 +37,12 @@ class Game:
 
             self.clear()
 
+            self.__ball.move()
+
+            self.detect_collisions()
+
             self.__screen.draw(self.__paddle, self.__frame)
+            self.__screen.draw(self.__ball, self.__frame)
 
             self.__screen.show()
 
@@ -45,6 +53,15 @@ class Game:
         self.__paddle.key_press(ch)
 
         return True
+
+    def detect_collisions(self):
+        # Ball with wall
+        [collide_y, collide_x] = self.__ball.is_intersection(
+            [0, 0], [config.HEIGHT, config.WIDTH])
+        if collide_x:
+            self.__ball.reverse_x()
+        if collide_y:
+            self.__ball.reverse_y()
 
     def clear(self):
         self.__screen.clear()

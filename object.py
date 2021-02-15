@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import config
 
 
@@ -37,13 +38,35 @@ class MovingObject(Object):
         super().__init__(**kwargs)
         self.__speed = kwargs.get('speed', np.array([0, 0]))
 
-    def move(self, value=np.array([0, 0])):
-        old_position = super(MovingObject, self).get_position()
+    def shift(self, value=np.array([0, 0])):
+        old_position = self.get_position()
         new_position = np.add(old_position, value)
         self.set_position(new_position)
 
     def get_speed(self):
         return self.__speed
+
+    def set_speed(self, speed):
+        self.__speed = speed
+
+    def is_intersection(self, position, dimensions):
+        my_position = self.get_position()
+        my_dimensions = self.get_dimensions()
+
+        left = position[1]
+        right = position[1] + dimensions[1]
+        top = position[0]
+        bottom = position[0] + dimensions[0]
+
+        my_left = my_position[1]
+        my_right = my_position[1] + my_dimensions[1]
+        my_top = my_position[0]
+        my_bottom = my_position[0] + my_dimensions[0]
+
+        collision_x = my_left == right or my_right == left or my_left == left or my_right == right
+        collision_y = my_top == bottom or my_bottom == top or my_top == top or my_bottom == bottom
+
+        return [collision_y, collision_x]
 
 
 class Paddle(MovingObject):
@@ -53,7 +76,24 @@ class Paddle(MovingObject):
     def key_press(self, ch):
         if ch == "a":
             speed_x = self.get_speed()[1]
-            self.move(np.array(np.array([0, -speed_x])))
+            self.shift(np.array(np.array([0, -speed_x])))
         elif ch == "d":
             speed_x = self.get_speed()[1]
-            self.move(np.array(np.array([0, speed_x])))
+            self.shift(np.array(np.array([0, speed_x])))
+
+
+class Ball(MovingObject):
+    def __init__(self,  **kwargs):
+        super().__init__(**kwargs)
+
+    def move(self):
+        speed = self.get_speed()
+        self.shift(speed)
+
+    def reverse_x(self):
+        [speed_y, speed_x] = self.get_speed()
+        self.set_speed(np.array([speed_y, -speed_x]))
+
+    def reverse_y(self):
+        [speed_y, speed_x] = self.get_speed()
+        self.set_speed(np.array([-speed_y, speed_x]))

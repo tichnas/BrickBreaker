@@ -1,4 +1,5 @@
 import colorama as col
+import math
 import sys
 import numpy as np
 import config
@@ -18,6 +19,9 @@ class Screen:
     def draw(self, obj, frame):
         y, x = obj.get_position()
         h, w = obj.get_dimensions()
+
+        x = math.floor(x)
+        y = math.floor(y)
 
         display, color = obj.get_representation(frame)
 
