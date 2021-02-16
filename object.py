@@ -83,6 +83,10 @@ class MovingObject(Object):
 
 class Paddle(MovingObject):
     def __init__(self,  **kwargs):
+        kwargs.setdefault('speed', np.array([0, 1]))
+        kwargs.setdefault('position', np.array([config.HEIGHT-2, 10]))
+        kwargs.setdefault('representation', get_representation('====='))
+
         super().__init__(**kwargs)
 
     def key_press(self, ch):
@@ -93,14 +97,38 @@ class Paddle(MovingObject):
             speed_x = self.get_speed()[1]
             self.shift(np.array(np.array([0, speed_x])))
 
+    def get_mid_x(self):
+        x = self.get_position()[1]
+        width = self.get_dimensions()[1]
+        return x + (width - 1) / 2
+
 
 class Ball(MovingObject):
     def __init__(self,  **kwargs):
+        kwargs.setdefault('speed', np.array([-0.5, 0.5]))
+        kwargs.setdefault('representation', get_representation('*'))
+
         super().__init__(**kwargs)
 
-    def move(self):
-        speed = self.get_speed()
-        self.shift(speed)
+        self.__activated = kwargs.get('activated', True)
+
+    def activate(self):
+        self.__activated = True
+
+    def move(self, paddle: Paddle):
+        if self.__activated:
+            speed = self.get_speed()
+            self.shift(speed)
+        else:
+            position_y = self.get_position()[0]
+            position_x = paddle.get_mid_x()
+            self.set_position(np.array([position_y, position_x]))
+
+    def is_intersection(self, position, dimensions):
+        if self.__activated:
+            return super().is_intersection(position, dimensions)
+        else:
+            return [False, False]
 
     def reverse_x(self):
         [speed_y, speed_x] = self.get_speed()
@@ -117,17 +145,16 @@ class Ball(MovingObject):
 
 class Brick(Object):
     def __init__(self,  **kwargs):
-        representation = kwargs.get(
-            'representation', get_representation('....'))
+        kwargs.setdefault('representation', get_representation('....'))
 
-        super().__init__(**kwargs, representation=representation)
+        super().__init__(**kwargs)
 
         self.__strength = kwargs.get('strength', 1)
-        self.__inactive = False
+        self.__destroyed = False
         self.update_color()
 
     def is_destroyed(self):
-        return self.__inactive
+        return self.__destroyed
 
     def update_color(self):
         colors = [
@@ -145,6 +172,6 @@ class Brick(Object):
         self.__strength -= 1
 
         if self.__strength == 0:
-            self.__inactive = True
+            self.__destroyed = True
         else:
             self.update_color()

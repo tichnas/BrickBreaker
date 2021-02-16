@@ -16,11 +16,10 @@ class Game:
 
         self.__frame = 0
 
-        self.__paddle = Paddle(speed=np.array(
-            [0, 1]), representation=get_representation('====='), position=np.array([config.HEIGHT-2, 10]))
+        self.__paddle = Paddle()
 
-        self.__ball = Ball(speed=np.array([-0.5, 0.5]), representation=get_representation(
-            '*'), position=np.array([config.HEIGHT - 3, 12]))
+        self.__ball = Ball(activated=False, position=np.array(
+            [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))
 
         self.__bricks = [
             Brick(position=[5, 5], strength=-1),
@@ -44,7 +43,7 @@ class Game:
 
             self.clear()
 
-            self.__ball.move()
+            self.__ball.move(self.__paddle)
 
             self.detect_collisions()
 
@@ -62,7 +61,11 @@ class Game:
         if ch == 'q':
             return False
 
-        self.__paddle.key_press(ch)
+        if ch == 'a' or ch == 'd':
+            self.__paddle.key_press(ch)
+
+        if ch == ' ':
+            self.__ball.activate()
 
         return True
 
@@ -97,9 +100,7 @@ class Game:
         if collide_x or collide_y:
             self.__ball.reverse_y()
             ball_x = self.__ball.get_position()[1]
-            paddle_x = self.__paddle.get_position()[1]
-            paddle_width = self.__paddle.get_dimensions()[1]
-            paddle_mid_x = paddle_x + (paddle_width - 1) / 2
+            paddle_mid_x = self.__paddle.get_mid_x()
             self.__ball.change_speed_x(0.1 * (ball_x - paddle_mid_x))
 
     def clear(self):
