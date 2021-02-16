@@ -67,14 +67,16 @@ class MovingObject(Object):
         my_top = my_position[0]
         my_bottom = my_position[0] + my_dimensions[0] - 1
 
-        outside = (my_right < left or my_left >
-                   right or my_top > bottom or my_bottom < top)
+        outside = (my_right + 1 < left or my_left >
+                   right + 1 or my_top > bottom + 1 or my_bottom + 1 < top)
 
         if outside:
             return [False, False]
 
-        collision_x = my_left == right or my_right == left or my_left == left or my_right == right
-        collision_y = my_top == bottom or my_bottom == top or my_top == top or my_bottom == bottom
+        collision_x = abs(my_left - right) <= 1 or abs(my_right -
+                                                       left) <= 1 or abs(my_left - left) <= 1 or abs(my_right - right) <= 1
+        collision_y = abs(my_top - bottom) <= 1 or abs(my_bottom -
+                                                       top) <= 1 or abs(my_top - top) <= 1 or abs(my_bottom - bottom) <= 1
 
         return [collision_y, collision_x]
 
@@ -107,6 +109,10 @@ class Ball(MovingObject):
     def reverse_y(self):
         [speed_y, speed_x] = self.get_speed()
         self.set_speed(np.array([-speed_y, speed_x]))
+
+    def change_speed_x(self, change):
+        [speed_y, speed_x] = self.get_speed()
+        self.set_speed(np.array([speed_y, speed_x + change]))
 
 
 class Brick(Object):

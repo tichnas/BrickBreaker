@@ -17,7 +17,7 @@ class Game:
         self.__frame = 0
 
         self.__paddle = Paddle(speed=np.array(
-            [0, 1]), representation=get_representation('====='), position=np.array([config.HEIGHT-1, 10]))
+            [0, 1]), representation=get_representation('====='), position=np.array([config.HEIGHT-2, 10]))
 
         self.__ball = Ball(speed=np.array([-0.5, 0.5]), representation=get_representation(
             '*'), position=np.array([config.HEIGHT - 3, 12]))
@@ -89,6 +89,18 @@ class Game:
                 self.__ball.reverse_y()
             if collide_x or collide_y:
                 brick.collide()
+
+        # Ball with paddle
+        [collide_y, collide_x] = self.__ball.is_intersection(
+            self.__paddle.get_position(), self.__paddle.get_dimensions())
+
+        if collide_x or collide_y:
+            self.__ball.reverse_y()
+            ball_x = self.__ball.get_position()[1]
+            paddle_x = self.__paddle.get_position()[1]
+            paddle_width = self.__paddle.get_dimensions()[1]
+            paddle_mid_x = paddle_x + (paddle_width - 1) / 2
+            self.__ball.change_speed_x(0.1 * (ball_x - paddle_mid_x))
 
     def clear(self):
         self.__screen.clear()
