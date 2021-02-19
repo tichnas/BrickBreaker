@@ -123,6 +123,7 @@ class Ball(MovingObject):
         super().__init__(**kwargs)
 
         self.__activated = kwargs.get('activated', True)
+        self.__powered = kwargs.get('powered', False)
 
     def activate(self):
         self.__activated = True
@@ -153,6 +154,15 @@ class Ball(MovingObject):
     def change_speed_x(self, change):
         [speed_y, speed_x] = self.get_speed()
         self.set_speed(np.array([speed_y, speed_x + change]))
+
+    def power(self):
+        self.__powered = True
+
+    def unpower(self):
+        self.__powered = False
+
+    def is_powered(self):
+        return self.__powered
 
 
 class Brick(Object):
@@ -187,6 +197,10 @@ class Brick(Object):
             self.__destroyed = True
         else:
             self.update_color()
+
+    def power_hit(self):
+        print('destroy')
+        self.__destroyed = True
 
 
 class PowerUp(MovingObject):
@@ -276,5 +290,20 @@ class BallMultiply(PowerUp):
 
         super().activate(frame)
 
-    def deactivate(self, paddle: Paddle):
-        print('This should not be deactivated')
+
+class ThruBall(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('T'))
+        kwargs.setdefault('color', np.array([['', col.Fore.GREEN]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame,  balls):
+        for ball in balls:
+            ball.power()
+
+        super().activate(frame)
+
+    def deactivate(self, balls):
+        for ball in balls:
+            ball.unpower()

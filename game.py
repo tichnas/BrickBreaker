@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall
 from utils import get_representation
 
 
@@ -29,6 +29,10 @@ class Game:
         self.__bricks = [
             Brick(position=[5, 5], strength=-1),
             Brick(position=[5, 10], strength=1),
+            Brick(position=[7, 10], strength=1),
+            Brick(position=[9, 10], strength=1),
+            Brick(position=[11, 10], strength=1),
+            Brick(position=[3, 10], strength=2),
             Brick(position=[5, 15], strength=2),
             Brick(position=[5, 20], strength=3),
         ]
@@ -61,6 +65,9 @@ class Game:
 
                     if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                         power.deactivate(self.__paddle)
+
+                    if isinstance(power, ThruBall):
+                        power.deactivate(self.__balls)
 
             self.detect_collisions()
 
@@ -111,13 +118,18 @@ class Game:
                 [collide_y, collide_x] = ball.is_intersection(
                     brick.get_position(), brick.get_dimensions())
 
-                if collide_x:
-                    ball.reverse_x()
-                if collide_y:
-                    ball.reverse_y()
+                if not ball.is_powered():
+                    if collide_x:
+                        ball.reverse_x()
+                    if collide_y:
+                        ball.reverse_y()
 
                 if collide_x or collide_y:
-                    brick.collide()
+                    if ball.is_powered():
+                        brick.power_hit()
+                    else:
+                        brick.collide()
+
                     if brick.is_destroyed() and random.randint(1, 100) <= 50:
                         self.generate_power(brick.get_position())
 
@@ -143,7 +155,8 @@ class Game:
             if collide_y or collide_x:
                 if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                     power.activate(self.__frame, self.__paddle)
-                if isinstance(power, BallMultiply):
+
+                if isinstance(power, BallMultiply) or isinstance(power, ThruBall):
                     power.activate(self.__frame, self.__balls)
 
     def clear(self):
@@ -152,7 +165,7 @@ class Game:
         print("\033[0;0H")
 
     def generate_power(self, position):
-        powers = [ExpandPaddle, ShrinkPaddle, BallMultiply]
+        powers = [ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall]
         index = random.randint(0, len(powers)-1)
 
         self.__powers.append(powers[index](position=position))
