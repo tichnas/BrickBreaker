@@ -216,11 +216,10 @@ class PowerUp(MovingObject):
         print('Override this')
 
     def check_finished(self, frame):
-        print(self.__start, frame)
         if not self.__start:
             return False
 
-        if frame - self.__start >= 2 * config.FRAME_RATE:
+        if frame - self.__start >= config.POWER_DURATION * config.FRAME_RATE:
             return True
 
         return False
@@ -239,3 +238,18 @@ class ExpandPaddle(PowerUp):
 
     def deactivate(self, paddle: Paddle):
         paddle.shrink()
+
+
+class ShrinkPaddle(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('P'))
+        kwargs.setdefault('color', np.array([['', col.Fore.RED]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame, paddle: Paddle):
+        paddle.shrink()
+        super().activate(frame)
+
+    def deactivate(self, paddle: Paddle):
+        paddle.expand()

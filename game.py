@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle
 from utils import get_representation
 
 
@@ -58,7 +58,7 @@ class Game:
                 elif power.check_finished(self.__frame):
                     self.__powers.remove(power)
 
-                    if isinstance(power, ExpandPaddle):
+                    if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                         power.deactivate(self.__paddle)
 
             self.detect_collisions()
@@ -135,7 +135,7 @@ class Game:
                 power.get_position(), power.get_dimensions())
 
             if collide_y or collide_x:
-                if isinstance(power, ExpandPaddle):
+                if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                     power.activate(self.__frame, self.__paddle)
 
     def clear(self):
@@ -144,7 +144,7 @@ class Game:
         print("\033[0;0H")
 
     def generate_power(self, position):
-        powers = [ExpandPaddle]
+        powers = [ExpandPaddle, ShrinkPaddle]
         index = random.randint(0, len(powers)-1)
 
         self.__powers.append(powers[index](position=position))
