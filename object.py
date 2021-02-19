@@ -334,3 +334,42 @@ class PaddleGrab(PowerUp):
 
     def deactivate(self, paddle_ungrab):
         paddle_ungrab()
+
+
+class Life(Object):
+    def __init__(self,  **kwargs):
+        kwargs.setdefault('representation', get_representation('*'))
+
+        super().__init__(**kwargs)
+
+
+class Score(Object):
+    def __init__(self,  **kwargs):
+        kwargs.setdefault('representation',
+                          get_representation('Score: 0'))
+        kwargs.setdefault('position', np.array([0, 0]))
+
+        super().__init__(**kwargs)
+
+        self.__score = 0
+
+    def increase_score(self, value):
+        self.__score += value
+        self.set_representation(get_representation(
+            'Score: ' + str(self.__score)))
+
+    def get_score(self):
+        return self.__score
+
+
+class Time(Object):
+    def __init__(self,  **kwargs):
+        kwargs.setdefault('representation',
+                          get_representation('Time: 0'))
+        kwargs.setdefault('position', np.array([0, config.WIDTH // 2]))
+
+        super().__init__(**kwargs)
+
+    def set_time(self, frame):
+        self.set_representation(get_representation(
+            'Time: ' + str(frame // config.FRAME_RATE)))

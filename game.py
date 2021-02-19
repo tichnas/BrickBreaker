@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab, Life, Score, Time
 from utils import get_representation
 
 
@@ -18,6 +18,14 @@ class Game:
         self.__screen = Screen()
 
         self.__frame = 0
+
+        self.__lives = []
+        for i in range(1, config.LIVES):
+            self.__lives.append(Life(position=np.array([0, config.WIDTH - i])))
+
+        self.__score = Score()
+
+        self.__time = Time()
 
         self.__paddle = Paddle()
 
@@ -46,6 +54,8 @@ class Game:
         while True:
             self.__frame += 1
             time.sleep(1/config.FRAME_RATE)
+
+            self.__time.set_time(self.__frame)
 
             if key_input.input_given():
                 if not self.manage_keys(key_input.get()):
@@ -80,6 +90,16 @@ class Game:
 
             self.detect_collisions()
 
+            if self.check_lose():
+                break
+
+            self.__screen.draw(self.__score, self.__frame)
+
+            self.__screen.draw(self.__time, self.__frame)
+
+            for life in self.__lives:
+                self.__screen.draw(life, self.__frame)
+
             self.__screen.draw(self.__paddle, self.__frame)
 
             for ball in self.__balls:
@@ -113,6 +133,7 @@ class Game:
 
     def detect_collisions(self):
         # Ball with wall
+        out_balls = []
         for ball in self.__balls:
             [collide_y, collide_x] = ball.is_intersection(
                 [0, 0], [config.HEIGHT, config.WIDTH])
@@ -120,6 +141,11 @@ class Game:
                 ball.reverse_x()
             if collide_y:
                 ball.reverse_y()
+
+            if ball.get_position()[0] >= config.HEIGHT - 2:
+                out_balls.append(ball)
+        for ball in out_balls:
+            self.__balls.remove(ball)
 
         # Ball with bricks
         for ball in self.__balls:
@@ -137,13 +163,16 @@ class Game:
                         ball.reverse_y()
 
                 if collide_x or collide_y:
+                    self.__score.increase_score(5)
                     if self.__powered_balls > 0:
                         brick.power_hit()
                     else:
                         brick.collide()
 
-                    if brick.is_destroyed() and random.randint(1, 100) <= 75:
-                        self.generate_power(brick.get_position())
+                    if brick.is_destroyed():
+                        self.__score.increase_score(10)
+                        if random.randint(1, 100) <= 75:
+                            self.generate_power(brick.get_position())
 
         # Ball with paddle
         for ball in self.__balls:
@@ -179,6 +208,19 @@ class Game:
 
                 if isinstance(power, PaddleGrab):
                     power.activate(self.__frame, self.paddle_grab)
+
+    def check_lose(self):
+        if len(self.__balls) == 0:
+            if len(self.__lives) > 0:
+                self.__balls = [Ball(activated=False, position=np.array(
+                    [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
+                self.__lives.pop()
+            else:
+                self.__screen.destroy()
+                print('Game Over!\nYour Score: ' +
+                      str(self.__score.get_score()))
+                return True
+        return False
 
     def clear(self):
         self.__screen.clear()

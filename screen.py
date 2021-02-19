@@ -36,3 +36,8 @@ class Screen:
             output += '\n'
 
         sys.stdout.write(output)
+
+    def destroy(self):
+        self.display[:] = ' '
+        self.color[:, :, 0] = col.Back.RESET
+        self.show()
