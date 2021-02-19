@@ -158,15 +158,6 @@ class Ball(MovingObject):
         [speed_y, speed_x] = self.get_speed()
         self.set_speed(np.array([speed_y, speed_x + change]))
 
-    def power(self):
-        self.__powered = True
-
-    def unpower(self):
-        self.__powered = False
-
-    def is_powered(self):
-        return self.__powered
-
 
 class Brick(Object):
     def __init__(self,  **kwargs):
@@ -301,15 +292,12 @@ class ThruBall(PowerUp):
 
         super().__init__(**kwargs)
 
-    def activate(self, frame,  balls):
-        for ball in balls:
-            ball.power()
-
+    def activate(self, frame,  power_balls):
+        power_balls()
         super().activate(frame)
 
-    def deactivate(self, balls):
-        for ball in balls:
-            ball.unpower()
+    def deactivate(self, unpower_balls):
+        unpower_balls()
 
 
 class FastBall(PowerUp):

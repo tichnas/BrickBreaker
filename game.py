@@ -23,6 +23,8 @@ class Game:
 
         self.__powers = []
 
+        self.__powered_balls = 0
+
         self.__balls = [Ball(activated=False, position=np.array(
             [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
 
@@ -66,7 +68,10 @@ class Game:
                     if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                         power.deactivate(self.__paddle)
 
-                    if isinstance(power, ThruBall) or isinstance(power, FastBall):
+                    if isinstance(power, ThruBall):
+                        power.deactivate(self.unpower_balls)
+
+                    if isinstance(power, FastBall):
                         power.deactivate(self.__balls)
 
             self.detect_collisions()
@@ -121,19 +126,19 @@ class Game:
                 [collide_y, collide_x] = ball.is_intersection(
                     brick.get_position(), brick.get_dimensions())
 
-                if not ball.is_powered():
+                if self.__powered_balls == 0:
                     if collide_x:
                         ball.reverse_x()
                     if collide_y:
                         ball.reverse_y()
 
                 if collide_x or collide_y:
-                    if ball.is_powered():
+                    if self.__powered_balls > 0:
                         brick.power_hit()
                     else:
                         brick.collide()
 
-                    if brick.is_destroyed() and random.randint(1, 100) <= 50:
+                    if brick.is_destroyed() and random.randint(1, 100) <= 75:
                         self.generate_power(brick.get_position())
 
         # Ball with paddle
@@ -159,8 +164,11 @@ class Game:
                 if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                     power.activate(self.__frame, self.__paddle)
 
-                if isinstance(power, BallMultiply) or isinstance(power, ThruBall) or isinstance(power, FastBall):
+                if isinstance(power, BallMultiply) or isinstance(power, FastBall):
                     power.activate(self.__frame, self.__balls)
+
+                if isinstance(power, ThruBall):
+                    power.activate(self.__frame, self.power_balls)
 
     def clear(self):
         self.__screen.clear()
@@ -170,5 +178,12 @@ class Game:
     def generate_power(self, position):
         powers = [ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall]
         index = random.randint(0, len(powers)-1)
+        index = 3
 
         self.__powers.append(powers[index](position=position))
+
+    def power_balls(self):
+        self.__powered_balls += 1
+
+    def unpower_balls(self):
+        self.__powered_balls -= 1
