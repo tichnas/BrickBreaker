@@ -36,6 +36,10 @@ class Object:
     def set_color(self, color):
         self.__color = color
 
+    def set_representation(self, representation):
+        self.__representation = representation
+        self.__height, self.__width = self.__representation.shape
+
 
 class MovingObject(Object):
     def __init__(self, **kwargs):
@@ -101,6 +105,14 @@ class Paddle(MovingObject):
         x = self.get_position()[1]
         width = self.get_dimensions()[1]
         return x + (width - 1) / 2
+
+    def expand(self):
+        width = self.get_dimensions()[1]
+        self.set_representation(get_representation("=" * (width + 2)))
+
+    def shrink(self):
+        width = self.get_dimensions()[1]
+        self.set_representation(get_representation("=" * (width - 2)))
 
 
 class Ball(MovingObject):
@@ -175,3 +187,55 @@ class Brick(Object):
             self.__destroyed = True
         else:
             self.update_color()
+
+
+class PowerUp(MovingObject):
+    def __init__(self,  **kwargs):
+        kwargs.setdefault('speed', np.array([2, 0]))
+
+        super().__init__(**kwargs)
+
+        self.__start = None
+
+    def move(self):
+        speed = self.get_speed()
+        self.shift(speed)
+
+    def is_destroyed(self):
+        return self.get_position()[0] == config.HEIGHT - 1
+
+    def activate(self, frame):
+        self.__start = frame
+
+    def is_activated(self):
+        if self.__start:
+            return True
+        return False
+
+    def finish(self):
+        print('Override this')
+
+    def check_finished(self, frame):
+        print(self.__start, frame)
+        if not self.__start:
+            return False
+
+        if frame - self.__start >= 2 * config.FRAME_RATE:
+            return True
+
+        return False
+
+
+class ExpandPaddle(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('P'))
+        kwargs.setdefault('color', np.array([['', col.Fore.GREEN]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame, paddle: Paddle):
+        paddle.expand()
+        super().activate(frame)
+
+    def deactivate(self, paddle: Paddle):
+        paddle.shrink()

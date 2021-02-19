@@ -1,9 +1,10 @@
 import time
+import random
 import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick
+from object import Paddle, Ball, Brick, ExpandPaddle
 from utils import get_representation
 
 
@@ -12,11 +13,15 @@ class Game:
         # clear screen + hide cursor
         print("\033[?25l\033[2J", end='')
 
+        random.seed(time.time())
+
         self.__screen = Screen()
 
         self.__frame = 0
 
         self.__paddle = Paddle()
+
+        self.__powers = []
 
         self.__ball = Ball(activated=False, position=np.array(
             [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))
@@ -45,10 +50,25 @@ class Game:
 
             self.__ball.move(self.__paddle)
 
+            for power in self.__powers:
+                if not power.is_activated():
+                    power.move()
+                    if power.is_destroyed():
+                        self.__powers.remove(power)
+                elif power.check_finished(self.__frame):
+                    self.__powers.remove(power)
+
+                    if isinstance(power, ExpandPaddle):
+                        power.deactivate(self.__paddle)
+
             self.detect_collisions()
 
             self.__screen.draw(self.__paddle, self.__frame)
             self.__screen.draw(self.__ball, self.__frame)
+
+            for power in self.__powers:
+                if not power.is_activated():
+                    self.__screen.draw(power, self.__frame)
 
             for brick in self.__bricks:
                 if brick.is_destroyed():
@@ -90,8 +110,11 @@ class Game:
                 self.__ball.reverse_x()
             if collide_y:
                 self.__ball.reverse_y()
+
             if collide_x or collide_y:
                 brick.collide()
+                if brick.is_destroyed() and random.randint(1, 100) <= 50:
+                    self.generate_power(brick.get_position())
 
         # Ball with paddle
         [collide_y, collide_x] = self.__ball.is_intersection(
@@ -103,7 +126,25 @@ class Game:
             paddle_mid_x = self.__paddle.get_mid_x()
             self.__ball.change_speed_x(0.1 * (ball_x - paddle_mid_x))
 
+        # Paddle with powers
+        for power in self.__powers:
+            if power.is_activated():
+                continue
+
+            [collide_y, collide_x] = self.__paddle.is_intersection(
+                power.get_position(), power.get_dimensions())
+
+            if collide_y or collide_x:
+                if isinstance(power, ExpandPaddle):
+                    power.activate(self.__frame, self.__paddle)
+
     def clear(self):
         self.__screen.clear()
         # place cursor at top left
         print("\033[0;0H")
+
+    def generate_power(self, position):
+        powers = [ExpandPaddle]
+        index = random.randint(0, len(powers)-1)
+
+        self.__powers.append(powers[index](position=position))
