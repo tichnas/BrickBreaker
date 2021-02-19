@@ -128,6 +128,9 @@ class Ball(MovingObject):
     def activate(self):
         self.__activated = True
 
+    def deactivate(self):
+        self.__activated = False
+
     def is_activated(self):
         return self.__activated
 
@@ -316,3 +319,18 @@ class FastBall(PowerUp):
     def deactivate(self, balls):
         for ball in balls:
             ball.set_speed(ball.get_speed() / 1.1)
+
+
+class PaddleGrab(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('G'))
+        kwargs.setdefault('color', np.array([['', col.Fore.GREEN]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame,  paddle_grab):
+        paddle_grab()
+        super().activate(frame)
+
+    def deactivate(self, paddle_ungrab):
+        paddle_ungrab()

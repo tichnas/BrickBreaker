@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab
 from utils import get_representation
 
 
@@ -24,6 +24,7 @@ class Game:
         self.__powers = []
 
         self.__powered_balls = 0
+        self.__paddle_grab = 0
 
         self.__balls = [Ball(activated=False, position=np.array(
             [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
@@ -73,6 +74,9 @@ class Game:
 
                     if isinstance(power, FastBall):
                         power.deactivate(self.__balls)
+
+                    if isinstance(power, PaddleGrab):
+                        power.deactivate(self.paddle_ungrab)
 
             self.detect_collisions()
 
@@ -152,6 +156,9 @@ class Game:
                 paddle_mid_x = self.__paddle.get_mid_x()
                 ball.change_speed_x(0.1 * (ball_x - paddle_mid_x))
 
+                if self.__paddle_grab > 0:
+                    ball.deactivate()
+
         # Paddle with powers
         for power in self.__powers:
             if power.is_activated():
@@ -170,15 +177,18 @@ class Game:
                 if isinstance(power, ThruBall):
                     power.activate(self.__frame, self.power_balls)
 
+                if isinstance(power, PaddleGrab):
+                    power.activate(self.__frame, self.paddle_grab)
+
     def clear(self):
         self.__screen.clear()
         # place cursor at top left
         print("\033[0;0H")
 
     def generate_power(self, position):
-        powers = [ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall]
+        powers = [ExpandPaddle, ShrinkPaddle,
+                  BallMultiply, ThruBall, FastBall, PaddleGrab]
         index = random.randint(0, len(powers)-1)
-        index = 3
 
         self.__powers.append(powers[index](position=position))
 
@@ -187,3 +197,9 @@ class Game:
 
     def unpower_balls(self):
         self.__powered_balls -= 1
+
+    def paddle_grab(self):
+        self.__paddle_grab += 1
+
+    def paddle_ungrab(self):
+        self.__paddle_grab -= 1
