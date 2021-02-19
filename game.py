@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall
 from utils import get_representation
 
 
@@ -66,7 +66,7 @@ class Game:
                     if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                         power.deactivate(self.__paddle)
 
-                    if isinstance(power, ThruBall):
+                    if isinstance(power, ThruBall) or isinstance(power, FastBall):
                         power.deactivate(self.__balls)
 
             self.detect_collisions()
@@ -95,7 +95,10 @@ class Game:
             self.__paddle.key_press(ch)
 
         if ch == ' ':
-            self.__balls[0].activate()
+            for ball in self.__balls:
+                if not ball.is_activated():
+                    ball.activate()
+                    break
 
         return True
 
@@ -156,7 +159,7 @@ class Game:
                 if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                     power.activate(self.__frame, self.__paddle)
 
-                if isinstance(power, BallMultiply) or isinstance(power, ThruBall):
+                if isinstance(power, BallMultiply) or isinstance(power, ThruBall) or isinstance(power, FastBall):
                     power.activate(self.__frame, self.__balls)
 
     def clear(self):
@@ -165,7 +168,7 @@ class Game:
         print("\033[0;0H")
 
     def generate_power(self, position):
-        powers = [ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall]
+        powers = [ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall]
         index = random.randint(0, len(powers)-1)
 
         self.__powers.append(powers[index](position=position))

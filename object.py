@@ -128,6 +128,9 @@ class Ball(MovingObject):
     def activate(self):
         self.__activated = True
 
+    def is_activated(self):
+        return self.__activated
+
     def move(self, paddle: Paddle):
         if self.__activated:
             speed = self.get_speed()
@@ -307,3 +310,21 @@ class ThruBall(PowerUp):
     def deactivate(self, balls):
         for ball in balls:
             ball.unpower()
+
+
+class FastBall(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('F'))
+        kwargs.setdefault('color', np.array([['', col.Fore.RED]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame,  balls):
+        for ball in balls:
+            ball.set_speed(ball.get_speed() * 1.1)
+
+        super().activate(frame)
+
+    def deactivate(self, balls):
+        for ball in balls:
+            ball.set_speed(ball.get_speed() / 1.1)
