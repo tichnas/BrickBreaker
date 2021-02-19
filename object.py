@@ -253,3 +253,28 @@ class ShrinkPaddle(PowerUp):
 
     def deactivate(self, paddle: Paddle):
         paddle.expand()
+
+
+class BallMultiply(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('M'))
+        kwargs.setdefault('color', np.array([['', col.Fore.GREEN]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame,  balls):
+        extraBalls = []
+
+        for ball in balls:
+            position = ball.get_position()
+            speed = np.negative(ball.get_speed())
+            extraBalls.append(Ball(position=position,
+                                   speed=speed))
+
+        for ball in extraBalls:
+            balls.append(ball)
+
+        super().activate(frame)
+
+    def deactivate(self, paddle: Paddle):
+        print('This should not be deactivated')

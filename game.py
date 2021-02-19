@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply
 from utils import get_representation
 
 
@@ -23,8 +23,8 @@ class Game:
 
         self.__powers = []
 
-        self.__ball = Ball(activated=False, position=np.array(
-            [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))
+        self.__balls = [Ball(activated=False, position=np.array(
+            [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
 
         self.__bricks = [
             Brick(position=[5, 5], strength=-1),
@@ -48,7 +48,8 @@ class Game:
 
             self.clear()
 
-            self.__ball.move(self.__paddle)
+            for ball in self.__balls:
+                ball.move(self.__paddle)
 
             for power in self.__powers:
                 if not power.is_activated():
@@ -64,7 +65,9 @@ class Game:
             self.detect_collisions()
 
             self.__screen.draw(self.__paddle, self.__frame)
-            self.__screen.draw(self.__ball, self.__frame)
+
+            for ball in self.__balls:
+                self.__screen.draw(ball, self.__frame)
 
             for power in self.__powers:
                 if not power.is_activated():
@@ -85,46 +88,49 @@ class Game:
             self.__paddle.key_press(ch)
 
         if ch == ' ':
-            self.__ball.activate()
+            self.__balls[0].activate()
 
         return True
 
     def detect_collisions(self):
         # Ball with wall
-        [collide_y, collide_x] = self.__ball.is_intersection(
-            [0, 0], [config.HEIGHT, config.WIDTH])
-        if collide_x:
-            self.__ball.reverse_x()
-        if collide_y:
-            self.__ball.reverse_y()
+        for ball in self.__balls:
+            [collide_y, collide_x] = ball.is_intersection(
+                [0, 0], [config.HEIGHT, config.WIDTH])
+            if collide_x:
+                ball.reverse_x()
+            if collide_y:
+                ball.reverse_y()
 
         # Ball with bricks
-        for brick in self.__bricks:
-            if brick.is_destroyed():
-                continue
+        for ball in self.__balls:
+            for brick in self.__bricks:
+                if brick.is_destroyed():
+                    continue
 
-            [collide_y, collide_x] = self.__ball.is_intersection(
-                brick.get_position(), brick.get_dimensions())
+                [collide_y, collide_x] = ball.is_intersection(
+                    brick.get_position(), brick.get_dimensions())
 
-            if collide_x:
-                self.__ball.reverse_x()
-            if collide_y:
-                self.__ball.reverse_y()
+                if collide_x:
+                    ball.reverse_x()
+                if collide_y:
+                    ball.reverse_y()
 
-            if collide_x or collide_y:
-                brick.collide()
-                if brick.is_destroyed() and random.randint(1, 100) <= 50:
-                    self.generate_power(brick.get_position())
+                if collide_x or collide_y:
+                    brick.collide()
+                    if brick.is_destroyed() and random.randint(1, 100) <= 50:
+                        self.generate_power(brick.get_position())
 
         # Ball with paddle
-        [collide_y, collide_x] = self.__ball.is_intersection(
-            self.__paddle.get_position(), self.__paddle.get_dimensions())
+        for ball in self.__balls:
+            [collide_y, collide_x] = ball.is_intersection(
+                self.__paddle.get_position(), self.__paddle.get_dimensions())
 
-        if collide_x or collide_y:
-            self.__ball.reverse_y()
-            ball_x = self.__ball.get_position()[1]
-            paddle_mid_x = self.__paddle.get_mid_x()
-            self.__ball.change_speed_x(0.1 * (ball_x - paddle_mid_x))
+            if collide_x or collide_y:
+                ball.reverse_y()
+                ball_x = ball.get_position()[1]
+                paddle_mid_x = self.__paddle.get_mid_x()
+                ball.change_speed_x(0.1 * (ball_x - paddle_mid_x))
 
         # Paddle with powers
         for power in self.__powers:
@@ -137,6 +143,8 @@ class Game:
             if collide_y or collide_x:
                 if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
                     power.activate(self.__frame, self.__paddle)
+                if isinstance(power, BallMultiply):
+                    power.activate(self.__frame, self.__balls)
 
     def clear(self):
         self.__screen.clear()
@@ -144,7 +152,7 @@ class Game:
         print("\033[0;0H")
 
     def generate_power(self, position):
-        powers = [ExpandPaddle, ShrinkPaddle]
+        powers = [ExpandPaddle, ShrinkPaddle, BallMultiply]
         index = random.randint(0, len(powers)-1)
 
         self.__powers.append(powers[index](position=position))
