@@ -5,7 +5,7 @@ from screen import Screen
 import config
 from key_input import KeyInput
 from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab, Life, Score, Time
-from utils import get_representation
+from utils import get_representation, get_bricks
 
 
 class Game:
@@ -37,16 +37,7 @@ class Game:
         self.__balls = [Ball(activated=False, position=np.array(
             [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
 
-        self.__bricks = [
-            Brick(position=[5, 5], strength=-1),
-            Brick(position=[5, 10], strength=1),
-            Brick(position=[7, 10], strength=1),
-            Brick(position=[9, 10], strength=1),
-            Brick(position=[11, 10], strength=1),
-            Brick(position=[3, 10], strength=2),
-            Brick(position=[5, 15], strength=2),
-            Brick(position=[5, 20], strength=3),
-        ]
+        self.__bricks = get_bricks(Brick)
 
     def start(self):
         key_input = KeyInput()
@@ -163,15 +154,15 @@ class Game:
                         ball.reverse_y()
 
                 if collide_x or collide_y:
-                    self.__score.increase_score(5)
                     if self.__powered_balls > 0:
                         brick.power_hit()
                     else:
                         brick.collide()
+                        ball.shift(np.array([ball.get_speed()[0], 0]))
 
                     if brick.is_destroyed():
                         self.__score.increase_score(10)
-                        if random.randint(1, 100) <= 75:
+                        if random.randint(1, 100) <= 20:
                             self.generate_power(brick.get_position())
 
         # Ball with paddle

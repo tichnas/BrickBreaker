@@ -8,6 +8,6 @@ HEIGHT = screen_height - 5
 
 FRAME_RATE = 30
 
-POWER_DURATION = 50  # in seconds
+POWER_DURATION = 15  # in seconds
 
 LIVES = 3

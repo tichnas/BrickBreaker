@@ -20,8 +20,8 @@ class Screen:
         y, x = obj.get_position()
         h, w = obj.get_dimensions()
 
-        x = math.floor(x)
-        y = math.floor(y)
+        x = round(np.asscalar(x))
+        y = round(np.asscalar(y))
 
         display, color = obj.get_representation(frame)
 

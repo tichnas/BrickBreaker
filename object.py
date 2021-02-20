@@ -117,7 +117,7 @@ class Paddle(MovingObject):
 
 class Ball(MovingObject):
     def __init__(self,  **kwargs):
-        kwargs.setdefault('speed', np.array([-0.5, 0.5]))
+        kwargs.setdefault('speed', np.array([-0.3, 0]))
         kwargs.setdefault('representation', get_representation('*'))
 
         super().__init__(**kwargs)
@@ -196,13 +196,12 @@ class Brick(Object):
             self.update_color()
 
     def power_hit(self):
-        print('destroy')
         self.__destroyed = True
 
 
 class PowerUp(MovingObject):
     def __init__(self,  **kwargs):
-        kwargs.setdefault('speed', np.array([2, 0]))
+        kwargs.setdefault('speed', np.array([0.3, 0]))
 
         super().__init__(**kwargs)
 
