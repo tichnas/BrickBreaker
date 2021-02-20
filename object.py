@@ -40,23 +40,6 @@ class Object:
         self.__representation = representation
         self.__height, self.__width = self.__representation.shape
 
-
-class MovingObject(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.__speed = kwargs.get('speed', np.array([0, 0]))
-
-    def shift(self, value=np.array([0, 0])):
-        old_position = self.get_position()
-        new_position = np.add(old_position, value)
-        self.set_position(new_position)
-
-    def get_speed(self):
-        return self.__speed
-
-    def set_speed(self, speed):
-        self.__speed = speed
-
     def is_intersection(self, position, dimensions):
         my_position = self.get_position()
         my_dimensions = self.get_dimensions()
@@ -85,10 +68,28 @@ class MovingObject(Object):
         return [collision_y, collision_x]
 
 
+class MovingObject(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.__speed = kwargs.get('speed', np.array([0, 0]))
+
+    def shift(self, value=np.array([0, 0])):
+        old_position = self.get_position()
+        new_position = np.add(old_position, value)
+        self.set_position(new_position)
+
+    def get_speed(self):
+        return self.__speed
+
+    def set_speed(self, speed):
+        self.__speed = speed
+
+
 class Paddle(MovingObject):
     def __init__(self,  **kwargs):
         kwargs.setdefault('speed', np.array([0, 1]))
-        kwargs.setdefault('position', np.array([config.HEIGHT-2, 10]))
+        kwargs.setdefault('position', np.array(
+            [config.HEIGHT-2, config.WIDTH // 2]))
         kwargs.setdefault('representation', get_representation('====='))
 
         super().__init__(**kwargs)
@@ -170,6 +171,7 @@ class Brick(Object):
 
         self.__strength = kwargs.get('strength', 1)
         self.__destroyed = False
+        self.__timer = kwargs.get('timer', -1)
         self.update_color()
 
     def is_destroyed(self):
@@ -181,11 +183,17 @@ class Brick(Object):
             [[col.Back.CYAN, col.Fore.CYAN]],
             [[col.Back.YELLOW, col.Fore.YELLOW]],
             [[col.Back.RED, col.Fore.RED]],
+            [[col.Back.LIGHTYELLOW_EX, col.Fore.LIGHTYELLOW_EX]]
         ]
+
         self.set_color(colors[max(0, self.__strength)])
 
     def collide(self):
         if self.__strength == -1:
+            return
+
+        if self.__strength == 4:
+            self.set_timer(1)
             return
 
         self.__strength -= 1
@@ -197,6 +205,23 @@ class Brick(Object):
 
     def power_hit(self):
         self.__destroyed = True
+
+    def check_timer(self):
+        if self.__timer > 0:
+            self.__timer -= 1
+        if self.__timer == 0:
+            return True
+        return False
+
+    def timer_exists(self):
+        return self.__timer != -1
+
+    def set_timer(self, value):
+        self.__timer = value
+
+    def decrease_timer(self):
+        if self.timer_exists():
+            self.__timer = self.__timer - 1
 
 
 class PowerUp(MovingObject):

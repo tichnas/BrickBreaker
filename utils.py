@@ -27,8 +27,8 @@ layout_1 = [
     '                                                                                                             ',
     '                       33333333                            33333333                                          ',
     '                             11111111                11111111                                                ',
-    '                                   11111111    11111111                                                      ',
-    '                                         11111111                                                            ',
+    '                                   44444444    44444444                                                      ',
+    '                                         44444444                                                            ',
 ]
 
 
@@ -39,14 +39,15 @@ def get_bricks(Brick):
         x = 0
 
         while x < len(layout_1[y]):
-            if layout_1[y][x] == ' ':
+            ch = layout_1[y][x]
+            if ch == ' ':
                 x += 1
                 continue
 
-            if layout_1[y][x] == '0':
+            if ch == '0':
                 strength = -1
             else:
-                strength = int(layout_1[y][x])
+                strength = int(ch)
 
             bricks.append(Brick(position=np.array([y, x]), strength=strength))
 

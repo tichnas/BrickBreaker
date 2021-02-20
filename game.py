@@ -59,6 +59,9 @@ class Game:
             for ball in self.__balls:
                 ball.move(self.__paddle)
 
+            for brick in self.__bricks:
+                brick.decrease_timer()
+
             for power in self.__powers:
                 if not power.is_activated():
                     power.move()
@@ -199,6 +202,19 @@ class Game:
 
                 if isinstance(power, PaddleGrab):
                     power.activate(self.__frame, self.paddle_grab)
+
+        # explode bricks & start timer for intersecting bricks
+        for brick in self.__bricks:
+            if (not brick.is_destroyed()) and brick.check_timer():
+                brick.power_hit()
+                self.__score.increase_score(7)
+
+                for b in self.__bricks:
+                    if (not b.is_destroyed()) and (not b.timer_exists()):
+                        [collide_y, collide_x] = brick.is_intersection(
+                            b.get_position(), b.get_dimensions())
+                        if collide_y or collide_x:
+                            b.set_timer(config.FRAME_RATE/5)
 
     def check_lose(self):
         if len(self.__balls) == 0:
