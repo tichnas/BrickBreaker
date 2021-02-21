@@ -13,8 +13,6 @@ class Game:
         # clear screen + hide cursor
         print("\033[?25l\033[2J", end='')
 
-        random.seed(time.time())
-
         self.__screen = Screen()
 
         self.__frame = 0
@@ -221,6 +219,9 @@ class Game:
             if len(self.__lives) > 0:
                 self.__balls = [Ball(activated=False, position=np.array(
                     [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
+                self.__powers = []
+                self.__powered_balls = 0
+                self.__paddle_grab = 0
                 self.__lives.pop()
             else:
                 self.__screen.destroy()
