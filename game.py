@@ -62,6 +62,7 @@ class Game:
                 ball.move(self.__paddle)
 
             for brick in self.__bricks:
+                brick.randomize_strength()
                 brick.decrease_timer()
 
             for power in self.__powers:

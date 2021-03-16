@@ -2,6 +2,7 @@ import numpy as np
 import colorama as col
 import math
 import config
+import random
 from utils import get_representation
 
 
@@ -164,6 +165,12 @@ class Ball(MovingObject):
 
 
 class Brick(Object):
+    # STRENGTH vs BRICK TYPE
+    # -1 = no effect on collision
+    # 1, 2, 3 = destroy after x hits
+    # 4 = exploding brick
+    # 5 = rainbow brick
+
     def __init__(self,  **kwargs):
         kwargs.setdefault('representation', get_representation('....'))
 
@@ -172,6 +179,13 @@ class Brick(Object):
         self.__strength = kwargs.get('strength', 1)
         self.__destroyed = False
         self.__timer = kwargs.get('timer', -1)
+
+        if self.__strength == 5:
+            self.__to_randomize = True
+            self.randomize_strength()
+        else:
+            self.__to_randomize = False
+
         self.update_color()
 
     def is_destroyed(self):
@@ -189,6 +203,7 @@ class Brick(Object):
         self.set_color(colors[max(0, self.__strength)])
 
     def collide(self):
+        self.__to_randomize = False
         if self.__strength == -1:
             return
 
@@ -226,6 +241,13 @@ class Brick(Object):
     def fall(self):
         position = self.get_position()
         self.set_position([position[0] + 1, position[1]])
+
+    def randomize_strength(self):
+        if not self.__to_randomize:
+            return
+
+        self.__strength = random.randint(1, 3)
+        self.update_color()
 
 
 class PowerUp(MovingObject):
