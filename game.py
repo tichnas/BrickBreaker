@@ -16,6 +16,7 @@ class Game:
         self.__screen = Screen()
 
         self.__frame = 0
+        self.__level = 0
 
         self.__lives = []
         for i in range(1, config.LIVES):
@@ -82,7 +83,7 @@ class Game:
 
             self.detect_collisions()
 
-            if self.check_lose():
+            if self.check_lose() or self.check_finish():
                 break
 
             self.__screen.draw(self.__score, self.__frame)
@@ -120,6 +121,9 @@ class Game:
                 if not ball.is_activated():
                     ball.activate()
                     break
+
+        if ch == 'n':
+            self.check_finish(True)
 
         return True
 
@@ -213,6 +217,46 @@ class Game:
                             b.get_position(), b.get_dimensions())
                         if collide_y or collide_x:
                             b.set_timer(config.FRAME_RATE/5)
+
+    def check_finish(self, cheat=False):
+        finish = True
+
+        for brick in self.__bricks:
+            if not brick.is_destroyed():
+                finish = False
+                break
+
+        if finish or cheat:
+            self.__level += 1
+            self.__balls = [Ball(activated=False, position=np.array(
+                [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
+            new_bricks = get_bricks(Brick, self.__level)
+
+            if not new_bricks:
+                print('Game Finish!\nYour Score: ' +
+                      str(self.__score.get_score()))
+                return True
+
+            self.__bricks = new_bricks
+            self.__powered_balls = 0
+            self.__paddle_grab = 0
+
+            for power in self.__powers:
+                if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
+                    power.deactivate(self.__paddle)
+
+                if isinstance(power, ThruBall):
+                    power.deactivate(self.unpower_balls)
+
+                if isinstance(power, FastBall):
+                    power.deactivate(self.__balls)
+
+                if isinstance(power, PaddleGrab):
+                    power.deactivate(self.paddle_ungrab)
+
+            self.__powers = []
+
+        return False
 
     def check_lose(self):
         if len(self.__balls) == 0:

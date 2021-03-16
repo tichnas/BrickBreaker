@@ -8,38 +8,52 @@ def get_representation(representation):
     return np.array([list(x + (' ' * (maxlen - len(x)))) for x in arr])
 
 
-layout_1 = [
-    '                                    3333333333333333                                                         ',
-    '                        222222222222                222222222222                                             ',
-    '            111111111111                                        111111111111                                 ',
-    '    00000000                                                                00000000                         ',
-    '                                                                                                             ',
-    '                      1111                                           1111                                    ',
-    '                  111100001111                                   111100001111                                ',
-    '                  111100001111                                   111100001111                                ',
-    '                      1111                                           1111                                    ',
-    '                                                                                                             ',
-    '                                                                                                             ',
-    '                                         00000000                                                            ',
-    '                                         33333333                                                            ',
-    '                                         22222222                                                            ',
-    '                                         11111111                                                            ',
-    '                                                                                                             ',
-    '                       33333333                            33333333                                          ',
-    '                             11111111                11111111                                                ',
-    '                                   44444444    44444444                                                      ',
-    '                                         44444444                                                            ',
+layouts = [
+    [
+        '',
+        '                                    3333333333333333                                                         ',
+        '                        222222222222                222222222222                                             ',
+        '            111111111111                                        111111111111                                 ',
+        '    00000000                                                                00000000                         ',
+    ],
+    [
+        '                                    3333333333333333                                                         ',
+        '                        222222222222                222222222222                                             ',
+        '            111111111111                                        111111111111                                 ',
+        '    00000000                                                                00000000                         ',
+        '                                                                                                             ',
+        '                      1111                                           1111                                    ',
+        '                  111100001111                                   111100001111                                ',
+        '                  111100001111                                   111100001111                                ',
+        '                      1111                                           1111                                    ',
+        '                                                                                                             ',
+        '                                                                                                             ',
+        '                                         00000000                                                            ',
+        '                                         33333333                                                            ',
+        '                                         22222222                                                            ',
+        '                                         11111111                                                            ',
+        '                                                                                                             ',
+        '                       33333333                            33333333                                          ',
+        '                             11111111                11111111                                                ',
+        '                                   44444444    44444444                                                      ',
+        '                                         44444444                                                            ',
+    ]
 ]
 
 
-def get_bricks(Brick):
+def get_bricks(Brick, level=0):
+    if level >= len(layouts):
+        return None
+
     bricks = []
 
-    for y in range(len(layout_1)):
+    layout = layouts[level]
+
+    for y in range(len(layout)):
         x = 0
 
-        while x < len(layout_1[y]):
-            ch = layout_1[y][x]
+        while x < len(layout[y]):
+            ch = layout[y][x]
             if ch == ' ':
                 x += 1
                 continue
@@ -49,7 +63,8 @@ def get_bricks(Brick):
             else:
                 strength = int(ch)
 
-            bricks.append(Brick(position=np.array([y, x]), strength=strength))
+            bricks.append(
+                Brick(position=np.array([y+1, x]), strength=strength))
 
             x += 4
 
