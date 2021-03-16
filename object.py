@@ -223,6 +223,10 @@ class Brick(Object):
         if self.timer_exists():
             self.__timer = self.__timer - 1
 
+    def fall(self):
+        position = self.get_position()
+        self.set_position([position[0] + 1, position[1]])
+
 
 class PowerUp(MovingObject):
     def __init__(self,  **kwargs):
@@ -397,3 +401,6 @@ class Time(Object):
     def set_time(self, frame):
         self.set_representation(get_representation(
             'Time: ' + str(frame // config.FRAME_RATE)))
+
+    def get_time(self, frame):
+        return frame // config.FRAME_RATE

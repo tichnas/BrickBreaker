@@ -10,6 +10,8 @@ from utils import get_representation, get_bricks
 
 class Game:
     def __init__(self):
+        self.__time_limits = [20, 30]
+
         # clear screen + hide cursor
         print("\033[?25l\033[2J", end='')
 
@@ -17,6 +19,7 @@ class Game:
 
         self.__frame = 0
         self.__level = 0
+        self.__level_start_time = 0
 
         self.__lives = []
         for i in range(1, config.LIVES):
@@ -170,6 +173,11 @@ class Game:
                         if random.randint(1, 100) <= 20:
                             self.generate_power(brick.get_position())
 
+                    if self.__time.get_time(self.__frame) - self.__level_start_time > self.__time_limits[self.__level]:
+                        ball.shift([1, 0])
+                        for b in self.__bricks:
+                            b.fall()
+
         # Ball with paddle
         for ball in self.__balls:
             [collide_y, collide_x] = ball.is_intersection(
@@ -240,6 +248,7 @@ class Game:
             self.__bricks = new_bricks
             self.__powered_balls = 0
             self.__paddle_grab = 0
+            self.__level_start_time = self.__time.get_time(self.__frame)
 
             for power in self.__powers:
                 if isinstance(power, ExpandPaddle) or isinstance(power, ShrinkPaddle):
@@ -259,6 +268,8 @@ class Game:
         return False
 
     def check_lose(self):
+        game_over = False
+
         if len(self.__balls) == 0:
             if len(self.__lives) > 0:
                 self.__balls = [Ball(activated=False, position=np.array(
@@ -268,10 +279,19 @@ class Game:
                 self.__paddle_grab = 0
                 self.__lives.pop()
             else:
-                self.__screen.destroy()
-                print('Game Over!\nYour Score: ' +
-                      str(self.__score.get_score()))
-                return True
+                game_over = True
+
+        for brick in self.__bricks:
+            if brick.get_position()[0] == config.HEIGHT - 2:
+                game_over = True
+                break
+
+        if game_over:
+            self.__screen.destroy()
+            print('Game Over!\nYour Score: ' +
+                  str(self.__score.get_score()))
+            return True
+
         return False
 
     def clear(self):
