@@ -4,7 +4,7 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab, Life, Score, Time
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab, PaddleShooter, Life, Score, Time
 from utils import get_representation, get_bricks
 
 
@@ -20,6 +20,7 @@ class Game:
         self.__frame = 0
         self.__level = 0
         self.__level_start_time = 0
+        self.__last_shoot = 0
 
         self.__lives = []
         for i in range(1, config.LIVES):
@@ -35,6 +36,7 @@ class Game:
 
         self.__powered_balls = 0
         self.__paddle_grab = 0
+        self.__paddle_shooting = 0
 
         self.__balls = [Ball(activated=False, position=np.array(
             [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
@@ -85,6 +87,15 @@ class Game:
                     if isinstance(power, PaddleGrab):
                         power.deactivate(self.paddle_ungrab)
 
+                    if isinstance(power, PaddleShooter):
+                        power.deactivate(self.paddle_shoot_off)
+
+            if self.__paddle_shooting and not self.__paddle.is_shooting():
+                self.__paddle.set_shooting(True)
+
+            if not self.__paddle_shooting and self.__paddle.is_shooting():
+                self.__paddle.set_shooting(False)
+
             self.detect_collisions()
 
             if self.check_lose() or self.check_finish():
@@ -121,10 +132,27 @@ class Game:
             self.__paddle.key_press(ch)
 
         if ch == ' ':
+            to_shoot = (self.__paddle_shooting > 0) and (self.__frame - self.__last_shoot >
+                                                         config.FRAME_RATE)
+
             for ball in self.__balls:
                 if not ball.is_activated():
                     ball.activate()
+                    to_shoot = False
                     break
+
+            if to_shoot:
+                self.__last_shoot = self.__frame
+                paddle_position = self.__paddle.get_position()
+                position_y = paddle_position[0] - 1
+                position_left = paddle_position[1]
+                position_right = paddle_position[1] + \
+                    self.__paddle.get_dimensions()[1] - 1
+
+                self.__balls.append(
+                    Ball(position=[position_y, position_left], speed=[-0.5, 0], temporary=True, representation=get_representation('^')))
+                self.__balls.append(
+                    Ball(position=[position_y, position_right], speed=[-0.5, 0], temporary=True, representation=get_representation('^')))
 
         if ch == 'n':
             self.check_finish(True)
@@ -142,6 +170,9 @@ class Game:
             if collide_y:
                 ball.reverse_y()
 
+            if ball.is_temporary() and (collide_x or collide_y):
+                out_balls.append(ball)
+
             if ball.get_position()[0] >= config.HEIGHT - 2:
                 out_balls.append(ball)
         for ball in out_balls:
@@ -158,6 +189,7 @@ class Game:
                     power.reverse_y()
 
         # Ball with bricks
+        out_balls = []
         for ball in self.__balls:
             initial_speed = ball.get_speed()
 
@@ -175,6 +207,9 @@ class Game:
                         ball.reverse_y()
 
                 if collide_x or collide_y:
+                    if ball.is_temporary():
+                        out_balls.append(ball)
+
                     if self.__powered_balls > 0:
                         brick.power_hit()
                     else:
@@ -191,6 +226,9 @@ class Game:
                         ball.shift([1, 0])
                         for b in self.__bricks:
                             b.fall()
+
+        for ball in out_balls:
+            self.__balls.remove(ball)
 
         # Ball with paddle
         for ball in self.__balls:
@@ -226,6 +264,9 @@ class Game:
 
                 if isinstance(power, PaddleGrab):
                     power.activate(self.__frame, self.paddle_grab)
+
+                if isinstance(power, PaddleShooter):
+                    power.activate(self.__frame, self.paddle_shoot_on)
 
         # explode bricks & start timer for intersecting bricks
         for brick in self.__bricks:
@@ -315,7 +356,7 @@ class Game:
 
     def generate_power(self, position, speed):
         powers = [ExpandPaddle, ShrinkPaddle,
-                  BallMultiply, ThruBall, FastBall, PaddleGrab]
+                  BallMultiply, ThruBall, FastBall, PaddleGrab, PaddleShooter]
         index = random.randint(0, len(powers)-1)
 
         self.__powers.append(powers[index](position=position, speed=speed))
@@ -331,3 +372,9 @@ class Game:
 
     def paddle_ungrab(self):
         self.__paddle_grab -= 1
+
+    def paddle_shoot_on(self):
+        self.__paddle_shooting += 1
+
+    def paddle_shoot_off(self):
+        self.__paddle_shooting -= 1

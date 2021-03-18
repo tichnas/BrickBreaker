@@ -103,6 +103,8 @@ class Paddle(MovingObject):
 
         super().__init__(**kwargs)
 
+        self.__shooting = False
+
     def key_press(self, ch):
         if ch == "a":
             speed_x = self.get_speed()[1]
@@ -124,6 +126,19 @@ class Paddle(MovingObject):
         width = self.get_dimensions()[1]
         self.set_representation(get_representation("=" * (width - 2)))
 
+    def set_shooting(self, value):
+        self.__shooting = value
+        width = self.get_dimensions()[1]
+
+        if value:
+            self.set_representation(get_representation(
+                '^' + ("=" * (width - 2)) + '^'))
+        else:
+            self.set_representation(get_representation("=" * width))
+
+    def is_shooting(self):
+        return self.__shooting
+
 
 class Ball(MovingObject):
     def __init__(self,  **kwargs):
@@ -134,6 +149,7 @@ class Ball(MovingObject):
 
         self.__activated = kwargs.get('activated', True)
         self.__powered = kwargs.get('powered', False)
+        self.__temporary = kwargs.get('temporary', False)
 
     def activate(self):
         self.__activated = True
@@ -162,6 +178,9 @@ class Ball(MovingObject):
     def change_speed_x(self, change):
         [speed_y, speed_x] = self.get_speed()
         self.set_speed(np.array([speed_y, speed_x + change]))
+
+    def is_temporary(self):
+        return self.__temporary
 
 
 class Brick(Object):
@@ -385,6 +404,21 @@ class PaddleGrab(PowerUp):
 
     def deactivate(self, paddle_ungrab):
         paddle_ungrab()
+
+
+class PaddleShooter(PowerUp):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('representation', get_representation('S'))
+        kwargs.setdefault('color', np.array([['', col.Fore.GREEN]]))
+
+        super().__init__(**kwargs)
+
+    def activate(self, frame,  paddle_shoot_on):
+        paddle_shoot_on()
+        super().activate(frame)
+
+    def deactivate(self, paddle_shoot_off):
+        paddle_shoot_off()
 
 
 class Life(Object):
