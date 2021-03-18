@@ -147,8 +147,20 @@ class Game:
         for ball in out_balls:
             self.__balls.remove(ball)
 
+        # Powers with wall
+        for power in self.__powers:
+            if not power.is_activated():
+                [collide_y, collide_x] = power.is_intersection(
+                    [0, 0], [config.HEIGHT, config.WIDTH])
+                if collide_x:
+                    power.reverse_x()
+                if collide_y:
+                    power.reverse_y()
+
         # Ball with bricks
         for ball in self.__balls:
+            initial_speed = ball.get_speed()
+
             for brick in self.__bricks:
                 if brick.is_destroyed():
                     continue
@@ -171,8 +183,9 @@ class Game:
 
                     if brick.is_destroyed():
                         self.__score.increase_score(10)
-                        if random.randint(1, 100) <= 20:
-                            self.generate_power(brick.get_position())
+                        if random.randint(1, 100) <= 200:
+                            self.generate_power(
+                                brick.get_position(), initial_speed)
 
                     if self.__time.get_time(self.__frame) - self.__level_start_time > self.__time_limits[self.__level]:
                         ball.shift([1, 0])
@@ -300,12 +313,12 @@ class Game:
         # place cursor at top left
         print("\033[0;0H")
 
-    def generate_power(self, position):
+    def generate_power(self, position, speed):
         powers = [ExpandPaddle, ShrinkPaddle,
                   BallMultiply, ThruBall, FastBall, PaddleGrab]
         index = random.randint(0, len(powers)-1)
 
-        self.__powers.append(powers[index](position=position))
+        self.__powers.append(powers[index](position=position, speed=speed))
 
     def power_balls(self):
         self.__powered_balls += 1

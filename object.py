@@ -85,6 +85,14 @@ class MovingObject(Object):
     def set_speed(self, speed):
         self.__speed = speed
 
+    def reverse_x(self):
+        [speed_y, speed_x] = self.get_speed()
+        self.set_speed(np.array([speed_y, -speed_x]))
+
+    def reverse_y(self):
+        [speed_y, speed_x] = self.get_speed()
+        self.set_speed(np.array([-speed_y, speed_x]))
+
 
 class Paddle(MovingObject):
     def __init__(self,  **kwargs):
@@ -150,14 +158,6 @@ class Ball(MovingObject):
             return super().is_intersection(position, dimensions)
         else:
             return [False, False]
-
-    def reverse_x(self):
-        [speed_y, speed_x] = self.get_speed()
-        self.set_speed(np.array([speed_y, -speed_x]))
-
-    def reverse_y(self):
-        [speed_y, speed_x] = self.get_speed()
-        self.set_speed(np.array([-speed_y, speed_x]))
 
     def change_speed_x(self, change):
         [speed_y, speed_x] = self.get_speed()
@@ -260,10 +260,11 @@ class PowerUp(MovingObject):
 
     def move(self):
         speed = self.get_speed()
+        self.set_speed([min(speed[0] + 0.01, 1), speed[1]])
         self.shift(speed)
 
     def is_destroyed(self):
-        return self.get_position()[0] == config.HEIGHT - 1
+        return self.get_position()[0] >= config.HEIGHT - 2
 
     def activate(self, frame):
         self.__start = frame
