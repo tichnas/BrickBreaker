@@ -4,13 +4,13 @@ import numpy as np
 from screen import Screen
 import config
 from key_input import KeyInput
-from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab, PaddleShooter, Life, Score, Time
+from object import Paddle, Ball, Brick, ExpandPaddle, ShrinkPaddle, BallMultiply, ThruBall, FastBall, PaddleGrab, PaddleShooter, Life, Score, Time, Boss, Bomb
 from utils import get_representation, get_bricks
 
 
 class Game:
     def __init__(self):
-        self.__time_limits = [20, 30]
+        self.__time_limits = [10, 20]
 
         # clear screen + hide cursor
         print("\033[?25l\033[2J", end='')
@@ -21,6 +21,7 @@ class Game:
         self.__level = 0
         self.__level_start_time = 0
         self.__last_shoot = 0
+        self.__last_bomb = 0
 
         self.__lives = []
         for i in range(1, config.LIVES):
@@ -42,6 +43,9 @@ class Game:
             [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
 
         self.__bricks = get_bricks(Brick)
+
+        self.__boss = None
+        self.__bomb = None
 
     def start(self):
         key_input = KeyInput()
@@ -122,6 +126,37 @@ class Game:
                     continue
                 self.__screen.draw(brick, self.__frame)
 
+            if self.__boss:
+                self.__boss.set_mid_x(self.__paddle.get_mid_x())
+                self.__screen.draw(self.__boss, self.__frame)
+
+                if not self.__bomb and (self.__frame - self.__last_bomb > 2 * config.FRAME_RATE):
+                    self.__bomb = Bomb(position=[self.__boss.get_position()[0] + self.__boss.get_dimensions()[
+                                       0], self.__paddle.get_mid_x()])
+                elif self.__bomb:
+                    self.__bomb.move()
+                    if self.__bomb.is_destroyed():
+                        self.__last_bomb = self.__frame
+                        self.__bomb = None
+                    else:
+                        self.__screen.draw(self.__bomb, self.__frame)
+
+                brick_y = self.__boss.get_position(
+                )[0] + self.__boss.get_dimensions()[0] + 1
+                produce_bricks = (self.__boss.get_health() +
+                                  self.__boss.powers_used() == 1)
+
+                for ball in self.__balls:
+                    if ball.get_position()[0] < brick_y + 2:
+                        produce_bricks = False
+                        break
+                if produce_bricks:
+                    self.__boss.use_power()
+
+                    for x in range(0, config.WIDTH - 4, 4):
+                        self.__bricks.append(
+                            Brick(position=np.array([brick_y, x]), strength=1))
+
             self.__screen.show()
 
     def manage_keys(self, ch):
@@ -188,6 +223,21 @@ class Game:
                 if collide_y:
                     power.reverse_y()
 
+        # Ball with Boss
+        if self.__boss:
+            for ball in self.__balls:
+                [collide_y, collide_x] = ball.is_intersection(
+                    self.__boss.get_position(), self.__boss.get_dimensions())
+
+                if collide_x:
+                    ball.reverse_x()
+                if collide_y:
+                    ball.reverse_y()
+
+                if collide_x or collide_y:
+                    if self.__boss.hit():
+                        self.__boss = None
+
         # Ball with bricks
         out_balls = []
         for ball in self.__balls:
@@ -218,7 +268,7 @@ class Game:
 
                     if brick.is_destroyed():
                         self.__score.increase_score(10)
-                        if random.randint(1, 100) <= 200:
+                        if random.randint(1, 100) <= 30 and self.__level < len(self.__time_limits) - 1:
                             self.generate_power(
                                 brick.get_position(), initial_speed)
 
@@ -285,9 +335,12 @@ class Game:
         finish = True
 
         for brick in self.__bricks:
-            if not brick.is_destroyed():
+            if not brick.is_destroyed() and brick.get_strength() > -1:
                 finish = False
                 break
+
+        if self.__boss:
+            finish = False
 
         if finish or cheat:
             self.__level += 1
@@ -318,20 +371,30 @@ class Game:
                 if isinstance(power, PaddleGrab):
                     power.deactivate(self.paddle_ungrab)
 
+            if self.__level == len(self.__time_limits) - 1:
+                self.__boss = Boss()
+
             self.__powers = []
 
         return False
 
     def check_lose(self):
         game_over = False
+        bomb_collide = False
 
-        if len(self.__balls) == 0:
+        if self.__bomb:
+            [collide_y, collide_x] = self.__paddle.is_intersection(
+                self.__bomb.get_position(), self.__bomb.get_dimensions())
+            bomb_collide = collide_x or collide_y
+
+        if len(self.__balls) == 0 or bomb_collide:
             if len(self.__lives) > 0:
                 self.__balls = [Ball(activated=False, position=np.array(
                     [self.__paddle.get_position()[0]-1, self.__paddle.get_mid_x()]))]
                 self.__powers = []
                 self.__powered_balls = 0
                 self.__paddle_grab = 0
+                self.__bomb = None
                 self.__lives.pop()
             else:
                 game_over = True

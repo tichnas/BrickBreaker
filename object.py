@@ -183,6 +183,58 @@ class Ball(MovingObject):
         return self.__temporary
 
 
+class Boss(Object):
+    def __init__(self,  **kwargs):
+        kwargs.setdefault('position', np.array([1, 0]))
+
+        super().__init__(**kwargs)
+
+        self.__health = 5
+        self.__powers_used = 0
+        self.update_representation()
+
+    def set_mid_x(self, mid_x):
+        position_y = self.get_position()[0]
+        position_x = mid_x - (self.get_dimensions()[1] - 1) / 2
+        self.set_position(np.array([position_y, position_x]))
+
+    def hit(self):
+        self.__health -= 1
+        self.update_representation()
+
+        if self.__health < 0:
+            return True
+        return False
+
+    def update_representation(self):
+        self.set_representation(get_representation(
+            '#-----------#\n|   ' + ('█' * self.__health) + ('░' * (5 - self.__health)) + '   |\n|     O     |\n|    /|\    |\n|    / \    |\n|           |\n|   *****   |\n|    ***    |\n#-----*-----#'))
+
+    def use_power(self):
+        self.__powers_used += 1
+
+    def powers_used(self):
+        return self.__powers_used
+
+    def get_health(self):
+        return self.__health
+
+
+class Bomb(MovingObject):
+    def __init__(self,  **kwargs):
+        kwargs.setdefault('speed', np.array([0.5, 0]))
+        kwargs.setdefault('representation', get_representation('#'))
+
+        super().__init__(**kwargs)
+
+    def move(self):
+        speed = self.get_speed()
+        self.shift(speed)
+
+    def is_destroyed(self):
+        return self.get_position()[0] >= config.HEIGHT - 2
+
+
 class Brick(Object):
     # STRENGTH vs BRICK TYPE
     # -1 = no effect on collision
@@ -267,6 +319,9 @@ class Brick(Object):
 
         self.__strength = random.randint(1, 3)
         self.update_color()
+
+    def get_strength(self):
+        return self.__strength
 
 
 class PowerUp(MovingObject):
