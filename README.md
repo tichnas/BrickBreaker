@@ -19,3 +19,8 @@ Run `python3 main.py`
 - `T` will give balls power to go through any brick and destroy it
 - `F` will increase speed of all balls
 - `G` will make balls stick to paddle on contact
+- `S` will give the Paddle power to shoot bullets (press SPACE to shoot)
+
+## Cheat
+
+- Press `N` to skip level

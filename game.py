@@ -10,7 +10,7 @@ from utils import get_representation, get_bricks
 
 class Game:
     def __init__(self):
-        self.__time_limits = [10, 20]
+        self.__time_limits = [60, 90, 120]
 
         # clear screen + hide cursor
         print("\033[?25l\033[2J", end='')
